@@ -35,10 +35,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            width: 85%;
-            max-width: 380px;
-            padding: 18px 24px;
+            gap: 12px;
+            width: 80%;
+            max-width: 320px;
+            padding: 14px 20px;
             background:
               linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)),
               var(--frost-bg);
@@ -64,13 +64,13 @@
         }
 
         .frosted-card .user-image {
-            width: 48px;
-            height: 48px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
         }
 
         .frosted-card .user-display {
-            font-size: 18px;
+            font-size: 16px;
             letter-spacing: 0.3px;
             color: #000;
             text-align: center;
@@ -83,22 +83,22 @@
             top: 80%;
             left: 50%;
             transform: translateX(-50%);
-            width: 85%;
-            max-width: 380px;
-            padding: 22px 30px;
+            width: 80%;
+            max-width: 320px;
+            padding: 16px 24px;
             background:
               linear-gradient(180deg, rgba(255,50,50,0.25), rgba(220,20,20,0.15)),
               rgba(255, 50, 50, 0.2); /* Красный фон */
             backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             border: 1px solid rgba(255, 80, 80, 0.4); /* Красная граница */
-            border-radius: 25px;
+            border-radius: 20px;
             box-shadow:
               inset 0 -3px 9px rgba(0,0,0,0.3),
               0 6px 20px rgba(255, 50, 50, 0.3); /* Красная тень */
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             text-align: center;
             cursor: pointer;
@@ -128,16 +128,16 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 85%;
-            max-width: 380px;
-            padding: 25px;
+            width: 80%;
+            max-width: 320px;
+            padding: 20px;
             background:
               linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)),
               var(--frost-bg);
             backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             border: 1px solid var(--frost-border);
-            border-radius: 25px;
+            border-radius: 20px;
             box-shadow:
               inset 0 -3px 9px rgba(0,0,0,0.25),
               0 8px 25px rgba(0,0,0,0.6);
@@ -157,9 +157,9 @@
         }
 
         .marker-popup .popup-icon {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -168,28 +168,28 @@
         }
 
         .marker-popup .popup-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             letter-spacing: 0.5px;
             color: #000;
         }
 
         .marker-popup .popup-message {
-            font-size: 18px;
+            font-size: 15px;
             opacity: 0.9;
             line-height: 1.4;
             color: #000;
         }
 
         .marker-popup .popup-close {
-            margin-top: 20px;
-            padding: 12px 30px;
+            margin-top: 15px;
+            padding: 10px 24px;
             background: rgba(255, 255, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
+            border-radius: 20px;
             color: #000;
-            font-size: 18px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -203,7 +203,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 15px 24px;
+            padding: 12px 20px;
             background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
             backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
@@ -216,7 +216,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
             display: none;
             z-index: 1000;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         /* Центральное уведомление для comm маркеров */
@@ -229,16 +229,16 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 85%;
-            max-width: 380px;
-            padding: 25px;
+            width: 80%;
+            max-width: 320px;
+            padding: 20px;
             background:
               linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)),
               var(--frost-bg);
             backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
             border: 1px solid var(--frost-border);
-            border-radius: 25px;
+            border-radius: 20px;
             box-shadow:
               inset 0 -3px 9px rgba(0,0,0,0.25),
               0 8px 25px rgba(0,0,0,0.6);
@@ -258,9 +258,9 @@
         }
 
         #centerNotification .notification-icon {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -269,28 +269,28 @@
         }
 
         #centerNotification .notification-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             letter-spacing: 0.5px;
             color: #000;
         }
 
         #centerNotification .notification-message {
-            font-size: 18px;
+            font-size: 15px;
             opacity: 0.9;
             line-height: 1.4;
             color: #000;
         }
 
         #centerNotification .notification-close {
-            margin-top: 20px;
-            padding: 12px 30px;
+            margin-top: 15px;
+            padding: 10px 24px;
             background: rgba(255, 255, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
+            border-radius: 20px;
             color: #000;
-            font-size: 18px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -318,10 +318,10 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            padding: 30px;
-            max-width: 380px;
-            width: 85%;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 320px;
+            width: 80%;
             text-align: center;
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
@@ -329,31 +329,31 @@
         }
 
         .sound-permission-card h3 {
-            margin-bottom: 20px;
-            font-size: 22px;
+            margin-bottom: 16px;
+            font-size: 18px;
             color: #fff;
         }
 
         .sound-permission-card p {
-            margin-bottom: 25px;
-            font-size: 18px;
+            margin-bottom: 20px;
+            font-size: 15px;
             opacity: 0.9;
             line-height: 1.4;
         }
 
         .sound-buttons {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
         }
 
         .sound-btn {
-            padding: 15px 25px;
+            padding: 12px 20px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
+            border-radius: 20px;
             background: rgba(255, 255, 255, 0.15);
             color: #fff;
-            font-size: 18px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
             flex: 1;
@@ -401,10 +401,10 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            padding: 30px;
-            max-width: 380px;
-            width: 85%;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 320px;
+            width: 80%;
             text-align: center;
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
@@ -412,31 +412,31 @@
         }
 
         .confirm-dps-card h3 {
-            margin-bottom: 20px;
-            font-size: 22px;
+            margin-bottom: 16px;
+            font-size: 18px;
             color: #fff;
         }
 
         .confirm-dps-card p {
-            margin-bottom: 25px;
-            font-size: 18px;
+            margin-bottom: 20px;
+            font-size: 15px;
             opacity: 0.9;
             line-height: 1.4;
         }
 
         .confirm-buttons {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
         }
 
         .confirm-btn {
-            padding: 15px 25px;
+            padding: 12px 20px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
+            border-radius: 20px;
             background: rgba(255, 255, 255, 0.15);
             color: #fff;
-            font-size: 18px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
             flex: 1;
@@ -470,14 +470,14 @@
         }
 
         .marker-icon {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
         }
 
         .user-marker {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
         }
     </style>
 </head>
@@ -497,7 +497,7 @@
 <!-- Центральное уведомление -->
 <div id="centerNotification">
     <div class="notification-icon">
-        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка уведомления" style="width: 60px; height: 60px; border-radius: 0%;">
+        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка уведомления" style="width: 40px; height: 40px; border-radius: 0%;">
     </div>
     <div class="notification-title" id="centerNotificationTitle">Уведомление</div>
     <div class="notification-message" id="centerNotificationMessage"></div>
@@ -507,7 +507,7 @@
 <!-- Попап для маркеров -->
 <div id="markerPopup" class="marker-popup">
     <div class="popup-icon">
-        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка попапа" style="width: 60px; height: 60px; border-radius: 0%;">
+        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка попапа" style="width: 40px; height: 40px; border-radius: 0%;">
     </div>
     <div class="popup-title" id="markerPopupTitle">ДПС</div>
     <div class="popup-message" id="markerPopupMessage"></div>
@@ -701,7 +701,7 @@ function addDpsToDatabase() {
 
 // Функция для создания кастомной иконки
 function createCustomIcon(url, isUser = false, rotation = 0) {
-    const size = isUser ? 80 : 48; // Увеличил размеры маркеров
+    const size = isUser ? 60 : 40; // Оптимальные размеры маркеров
     const rotationStyle = rotation !== 0 ? `transform: rotate(${rotation}deg);` : '';
     
     // Для пользовательской иконки изменяем якорь, чтобы нижний край был привязан к геопозиции
