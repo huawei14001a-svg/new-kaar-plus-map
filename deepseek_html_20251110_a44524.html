@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TomTom + NocoDB + Geo Frost</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #000; 
+            min-width: 380px;
+        }
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            min-width: 380px;
+        }
+
+        :root {
+            --frost-bg: rgba(255, 255, 255, 0.08);
+            --frost-border: rgba(255, 255, 255, 0.18);
+            --blur-intensity: 18px;
+        }
+
+        .frosted-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            width: 85%;
+            max-width: 380px;
+            padding: 18px 24px;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)),
+              var(--frost-bg);
+            backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            border: 1px solid var(--frost-border);
+            border-radius: 999px;
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.25),
+              0 4px 15px rgba(0,0,0,0.45);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            z-index: 1000;
+            cursor: pointer;
+            transition: 0.2s ease-in-out;
+        }
+
+        .frosted-card:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow:
+              inset 0 -3px 9px rgba(255,255,255,0.15),
+              0 4px 25px rgba(255,255,255,0.2);
+        }
+
+        .frosted-card .user-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+        }
+
+        .frosted-card .user-display {
+            font-size: 18px;
+            letter-spacing: 0.3px;
+            color: #000;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Кнопка добавления ДПС - УВЕЛИЧЕННАЯ И КРАСНАЯ */
+        #addDpsButton {
+            position: absolute;
+            top: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 380px;
+            padding: 22px 30px;
+            background:
+              linear-gradient(180deg, rgba(255,50,50,0.25), rgba(220,20,20,0.15)),
+              rgba(255, 50, 50, 0.2); /* Красный фон */
+            backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            border: 1px solid rgba(255, 80, 80, 0.4); /* Красная граница */
+            border-radius: 25px;
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.3),
+              0 6px 20px rgba(255, 50, 50, 0.3); /* Красная тень */
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease-in-out;
+            display: none;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        #addDpsButton:hover {
+            transform: translateX(-50%) scale(1.08);
+            background:
+              linear-gradient(180deg, rgba(255,70,70,0.35), rgba(220,40,40,0.25)),
+              rgba(255, 70, 70, 0.3);
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.4),
+              0 8px 25px rgba(255, 70, 70, 0.4);
+        }
+
+        /* Стили для попапов маркеров в стиле уведомлений */
+        .marker-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 85%;
+            max-width: 380px;
+            padding: 25px;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)),
+              var(--frost-bg);
+            backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            border: 1px solid var(--frost-border);
+            border-radius: 25px;
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.25),
+              0 8px 25px rgba(0,0,0,0.6);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            text-align: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            pointer-events: none;
+        }
+
+        .marker-popup.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .marker-popup .popup-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .marker-popup .popup-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            color: #000;
+        }
+
+        .marker-popup .popup-message {
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.4;
+            color: #000;
+        }
+
+        .marker-popup .popup-close {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: #000;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .marker-popup .popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #proximityNotification {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 24px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+            backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            border: 1px solid var(--frost-border);
+            border-radius: 999px;
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.25),
+              0 4px 15px rgba(0,0,0,0.45);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            display: none;
+            z-index: 1000;
+            font-size: 16px;
+        }
+
+        /* Центральное уведомление для comm маркеров */
+        #centerNotification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 85%;
+            max-width: 380px;
+            padding: 25px;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)),
+              var(--frost-bg);
+            backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+            border: 1px solid var(--frost-border);
+            border-radius: 25px;
+            box-shadow:
+              inset 0 -3px 9px rgba(0,0,0,0.25),
+              0 8px 25px rgba(0,0,0,0.6);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            text-align: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            pointer-events: none;
+        }
+
+        #centerNotification.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        #centerNotification .notification-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #centerNotification .notification-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            color: #000;
+        }
+
+        #centerNotification .notification-message {
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.4;
+            color: #000;
+        }
+
+        #centerNotification .notification-close {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: #000;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #centerNotification .notification-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Стили для модального окна разрешения звука */
+        #soundPermissionModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .sound-permission-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 380px;
+            width: 85%;
+            text-align: center;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .sound-permission-card h3 {
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #fff;
+        }
+
+        .sound-permission-card p {
+            margin-bottom: 25px;
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .sound-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .sound-btn {
+            padding: 15px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .sound-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .sound-btn.yes {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .sound-btn.yes:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .sound-btn.no {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        .sound-btn.no:hover {
+            background: rgba(244, 67, 54, 0.5);
+        }
+
+        /* Модальное окно подтверждения добавления ДПС */
+        #confirmDpsModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            display: none;
+        }
+
+        .confirm-dps-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 380px;
+            width: 85%;
+            text-align: center;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .confirm-dps-card h3 {
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #fff;
+        }
+
+        .confirm-dps-card p {
+            margin-bottom: 25px;
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 15px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .confirm-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .confirm-btn.yes {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .confirm-btn.yes:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .confirm-btn.no {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        .confirm-btn.no:hover {
+            background: rgba(244, 67, 54, 0.5);
+        }
+
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+
+        .marker-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+        }
+
+        .user-marker {
+            width: 80px;
+            height: 80px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="geoButton" class="frosted-card">
+    <img src="https://iimg.su/s/20/gm9WM5oxvBNSi8sDT6yoAlOz8gkprZHO28kRhkn6.png" alt="Аватар" class="user-image">
+    <div class="user-display"><b>Разрешить геолокацию</b></div>
+</div>
+
+<!-- Кнопка добавления ДПС - КРАСНАЯ И УВЕЛИЧЕННАЯ -->
+<div id="addDpsButton">Добавить ДПС</div>
+
+<div id="proximityNotification"></div>
+
+<!-- Центральное уведомление -->
+<div id="centerNotification">
+    <div class="notification-icon">
+        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка уведомления" style="width: 60px; height: 60px; border-radius: 0%;">
+    </div>
+    <div class="notification-title" id="centerNotificationTitle">Уведомление</div>
+    <div class="notification-message" id="centerNotificationMessage"></div>
+    <button class="notification-close">Понятно</button>
+</div>
+
+<!-- Попап для маркеров -->
+<div id="markerPopup" class="marker-popup">
+    <div class="popup-icon">
+        <img src="https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif" alt="Иконка попапа" style="width: 60px; height: 60px; border-radius: 0%;">
+    </div>
+    <div class="popup-title" id="markerPopupTitle">ДПС</div>
+    <div class="popup-message" id="markerPopupMessage"></div>
+    <button class="popup-close">Понятно</button>
+</div>
+
+<!-- Модальное окно разрешения звука -->
+<div id="soundPermissionModal" style="display: none;">
+    <div class="sound-permission-card">
+        <h3>Звуковые уведомления</h3>
+        <p>Хотите получать звуковые уведомления при приближении к ДПС?</p>
+        <div class="sound-buttons">
+            <button class="sound-btn yes">ДА</button>
+            <button class="sound-btn no">НЕТ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения добавления ДПС -->
+<div id="confirmDpsModal">
+    <div class="confirm-dps-card">
+        <h3>Добавить ДПС</h3>
+        <p>Вы уверены, что хотите отметить тут ДПС?</p>
+        <div class="confirm-buttons">
+            <button class="confirm-btn yes">ДА</button>
+            <button class="confirm-btn no">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const apiKey = "W1S6zYxW04QD9ShOWOMZnFVnKnyxcjkL";
+const token = "wLQHYMSz2QYSR589VqZbzMGTyC5-4p0Gvtebgw7-";
+const tableUrl = "https://nocodb.puzzlebot.top/api/v2/tables/mn15zqyrzy95xtp/records";
+
+// Инициализация карты Leaflet с темным стилем TomTom
+const map = L.map('map').setView([61.254051, 73.396197], 12);
+
+// Добавление темного стиля TomTom Raster Tiles
+L.tileLayer(`https://api.tomtom.com/map/1/tile/basic/night/{z}/{x}/{y}.png?key=${apiKey}&tileSize=512`, {
+    attribution: '© TomTom',
+    maxZoom: 22,
+    tileSize: 512,
+    zoomOffset: -1
+}).addTo(map);
+
+const userIcon = "https://s.iimg.su/s/05/g0ZCjImxaKBC4uPDaihc7JmlMdC1cz3mYWzX09to.png"; // Новая иконка
+const popupIcon = "https://iimg.su/s/20/gAVLBWCxVnvIUMz9ynbUbanhNSZljD6AOKod42GV.gif";
+let userMarker = null;
+let otherMarkers = [];
+const proximityThreshold = 500;
+
+// Переменные для отслеживания уведомлений
+let activeProximityNotification = null;
+let notificationTimer = null;
+let notificationConfirmed = false;
+
+// Переменная для хранения разрешения на звук
+let soundEnabled = false;
+// Аудио элементы для звуков
+let dpsProximityAudio = null;
+let dpsAddedAudio = null;
+
+// Функция для загрузки и воспроизведения звука ДПС рядом
+function playDpsProximitySound() {
+    if (!soundEnabled) return;
+    
+    if (!dpsProximityAudio) {
+        dpsProximityAudio = new Audio("http://huawei14001a-svg.github.io/soundsNEW/Kaaraudio.mp3");
+    }
+    
+    dpsProximityAudio.currentTime = 0;
+    dpsProximityAudio.play().catch(e => console.log("Ошибка воспроизведения звука:", e));
+}
+
+// Функция для загрузки и воспроизведения звука добавления ДПС
+function playDpsAddedSound() {
+    if (!soundEnabled) return;
+    
+    if (!dpsAddedAudio) {
+        dpsAddedAudio = new Audio("https://huawei14001a-svg.github.io/metkadobavlena/copy_18243399-C03A-47D7-B054-2AEA295C1124.mp3");
+    }
+    
+    dpsAddedAudio.currentTime = 0;
+    dpsAddedAudio.play().catch(e => console.log("Ошибка воспроизведения звука:", e));
+}
+
+// Функция для показа модального окна разрешения звука
+function showSoundPermissionModal() {
+    const modal = document.getElementById('soundPermissionModal');
+    modal.style.display = 'flex';
+    
+    // Обработчики для кнопок ДА/НЕТ
+    document.querySelector('.sound-btn.yes').onclick = function() {
+        soundEnabled = true;
+        modal.style.display = 'none';
+        
+        // Предзагружаем звуки
+        dpsProximityAudio = new Audio("http://huawei14001a-svg.github.io/soundsNEW/Kaaraudio.mp3");
+        dpsAddedAudio = new Audio("https://huawei14001a-svg.github.io/metkadobavlena/copy_18243399-C03A-47D7-B054-2AEA295C1124.mp3");
+        dpsProximityAudio.load();
+        dpsAddedAudio.load();
+    };
+    
+    document.querySelector('.sound-btn.no').onclick = function() {
+        soundEnabled = false;
+        modal.style.display = 'none';
+    };
+}
+
+// Функция для показа модального окна подтверждения добавления ДПС
+function showConfirmDpsModal() {
+    const modal = document.getElementById('confirmDpsModal');
+    modal.style.display = 'flex';
+    
+    // Обработчики для кнопок ДА/НЕТ
+    document.querySelector('#confirmDpsModal .confirm-btn.yes').onclick = function() {
+        modal.style.display = 'none';
+        addDpsToDatabase();
+    };
+    
+    document.querySelector('#confirmDpsModal .confirm-btn.no').onclick = function() {
+        modal.style.display = 'none';
+    };
+}
+
+// Функция для добавления ДПС в базу данных
+function addDpsToDatabase() {
+    if (!userMarker) {
+        alert("Геолокация не определена!");
+        return;
+    }
+    
+    const latlng = userMarker.getLatLng();
+    const dpsData = {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        pic: "https://s.iimg.su/s/03/gnVFlXXxHc8QwpUhCrN5np4I8u8BeteLdtNqpPNk.gif",
+        name: "ДПС"
+    };
+    
+    fetch(tableUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'xc-token': token
+        },
+        body: JSON.stringify(dpsData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка сети');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showCenterNotification("ДПС успешно добавлено!", "Успех");
+        playDpsAddedSound();
+        
+        // Добавляем маркер на карту
+        const markerImageUrl = dpsData.pic;
+        const randomRotation = getRandomRotation();
+        const customIcon = createCustomIcon(markerImageUrl, false, randomRotation);
+        
+        const leafletMarker = L.marker([dpsData.lat, dpsData.lng], { icon: customIcon })
+            .addTo(map)
+            .on('click', function(e) {
+                e.originalEvent.stopPropagation();
+                
+                document.getElementById('centerNotification').classList.remove('active');
+                document.getElementById('markerPopup').classList.remove('active');
+                
+                showMarkerPopup(dpsData);
+            });
+        
+        const markerId = `${dpsData.lat.toFixed(6)}_${dpsData.lng.toFixed(6)}`;
+        otherMarkers.push({ 
+            lat: dpsData.lat, 
+            lng: dpsData.lng, 
+            name: dpsData.name,
+            id_name: "",
+            rotation: randomRotation,
+            id: markerId
+        });
+    })
+    .catch(error => {
+        console.error("Ошибка добавления ДПС:", error);
+        showCenterNotification("Ошибка при добавлении ДПС", "Ошибка");
+    });
+}
+
+// Функция для создания кастомной иконки
+function createCustomIcon(url, isUser = false, rotation = 0) {
+    const size = isUser ? 80 : 48; // Увеличил размеры маркеров
+    const rotationStyle = rotation !== 0 ? `transform: rotate(${rotation}deg);` : '';
+    
+    // Для пользовательской иконки изменяем якорь, чтобы нижний край был привязан к геопозиции
+    const iconAnchor = isUser ? [size/2, size] : [size/2, size/2];
+    
+    return L.divIcon({
+        className: 'custom-marker',
+        html: `<img src="${url}" class="marker-icon ${isUser ? 'user-marker' : ''}" style="width: ${size}px; height: ${size}px; ${rotationStyle}">`,
+        iconSize: [size, size],
+        iconAnchor: iconAnchor // Для пользователя якорь внизу по центру
+    });
+}
+
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function showNotification(message) {
+    const notif = document.getElementById('proximityNotification');
+    notif.innerText = message;
+    notif.style.display = 'flex';
+    setTimeout(() => { notif.style.display = 'none'; }, 3000);
+}
+
+// Функция для показа центрального уведомления для comm маркеров
+function showCenterNotification(message, title = "Уведомление") {
+    const centerNotif = document.getElementById('centerNotification');
+    const titleElement = document.getElementById('centerNotificationTitle');
+    const messageElement = document.getElementById('centerNotificationMessage');
+    
+    titleElement.textContent = title;
+    messageElement.textContent = message;
+    centerNotif.classList.add('active');
+}
+
+// Функция для показа уведомления о близости ДПС с повторением
+function showProximityNotification(distance, markerName) {
+    // Останавливаем предыдущий таймер
+    if (notificationTimer) {
+        clearTimeout(notificationTimer);
+        notificationTimer = null;
+    }
+    
+    // Сбрасываем флаг подтверждения
+    notificationConfirmed = false;
+    
+    const centerNotif = document.getElementById('centerNotification');
+    const titleElement = document.getElementById('centerNotificationTitle');
+    const messageElement = document.getElementById('centerNotificationMessage');
+    
+    titleElement.textContent = "ДПС рядом!";
+    messageElement.textContent = `Вы находитесь рядом с ДПС! Расстояние: ${Math.round(distance)} метров`;
+    centerNotif.classList.add('active');
+    
+    playDpsProximitySound();
+    
+    // Запускаем таймер для повторения уведомления через минуту
+    notificationTimer = setTimeout(() => {
+        if (!notificationConfirmed) {
+            showProximityNotification(distance, markerName);
+        }
+    }, 60000); // 60000 мс = 1 минута
+}
+
+// Функция для показа попапа маркера
+function showMarkerPopup(markerData) {
+    const popup = document.getElementById('markerPopup');
+    const titleElement = document.getElementById('markerPopupTitle');
+    const messageElement = document.getElementById('markerPopupMessage');
+    
+    titleElement.textContent = markerData.name || "ДПС";
+    messageElement.textContent = `Координаты: ${markerData.lat.toFixed(6)}, ${markerData.lng.toFixed(6)}`;
+    
+    popup.classList.add('active');
+}
+
+// Закрытие центрального уведомления по кнопке
+document.querySelector('#centerNotification .notification-close').addEventListener('click', function() {
+    document.getElementById('centerNotification').classList.remove('active');
+    notificationConfirmed = true;
+    
+    // Останавливаем таймер повторения
+    if (notificationTimer) {
+        clearTimeout(notificationTimer);
+        notificationTimer = null;
+    }
+});
+
+// Закрытие попапа маркера по кнопке
+document.querySelector('#markerPopup .popup-close').addEventListener('click', function() {
+    document.getElementById('markerPopup').classList.remove('active');
+});
+
+// Закрытие уведомлений по клику вне их
+document.addEventListener('click', function(event) {
+    const centerNotif = document.getElementById('centerNotification');
+    const markerPopup = document.getElementById('markerPopup');
+    
+    if (centerNotif.classList.contains('active') && !centerNotif.contains(event.target)) {
+        centerNotif.classList.remove('active');
+        notificationConfirmed = true;
+        
+        // Останавливаем таймер повторения
+        if (notificationTimer) {
+            clearTimeout(notificationTimer);
+            notificationTimer = null;
+        }
+    }
+    
+    if (markerPopup.classList.contains('active') && !markerPopup.contains(event.target)) {
+        markerPopup.classList.remove('active');
+    }
+});
+
+function checkProximity(lat, lng) {
+    let closestMarker = null;
+    let minDistance = Infinity;
+    
+    otherMarkers.forEach(m => {
+        if (m.id_name === "comm") return;
+        
+        const distance = getDistanceFromLatLonInMeters(lat, lng, m.lat, m.lng);
+        if (distance < proximityThreshold && distance < minDistance) {
+            minDistance = distance;
+            closestMarker = m;
+        }
+    });
+    
+    if (closestMarker && minDistance < proximityThreshold) {
+        // Если уведомление уже активно для этого маркера, не показываем новое
+        if (activeProximityNotification === closestMarker.id) {
+            return;
+        }
+        
+        // Устанавливаем активное уведомление
+        activeProximityNotification = closestMarker.id;
+        
+        showNotification(`Вы рядом с меткой "${closestMarker.name}"!`);
+        showProximityNotification(minDistance, closestMarker.name);
+    } else {
+        // Сбрасываем активное уведомление, если вышли из зоны
+        activeProximityNotification = null;
+        notificationConfirmed = true;
+        
+        // Останавливаем таймер повторения
+        if (notificationTimer) {
+            clearTimeout(notificationTimer);
+            notificationTimer = null;
+        }
+    }
+}
+
+// Функция для генерации случайного угла вращения
+function getRandomRotation() {
+    return Math.floor(Math.random() * 0);
+}
+
+// Загрузка маркеров из базы
+fetch(tableUrl, { headers: { "xc-token": token } })
+.then(res => res.json())
+.then(data => {
+    data.list.forEach(marker => {
+        if(marker.lat && marker.lng){
+            const markerImageUrl = marker.pic || "https://iimg.su/s/20/giTwje7xhv9YlqNoULTJHDO1NT8Ce2SJKhqMG53H.png";
+            
+            const randomRotation = getRandomRotation();
+            const customIcon = createCustomIcon(markerImageUrl, false, randomRotation);
+            
+            const leafletMarker = L.marker([marker.lat, marker.lng], { icon: customIcon })
+                .addTo(map)
+                .on('click', function(e) {
+                    e.originalEvent.stopPropagation();
+                    
+                    document.getElementById('centerNotification').classList.remove('active');
+                    document.getElementById('markerPopup').classList.remove('active');
+                    
+                    if (marker.id_name === "comm") {
+                        showCenterNotification(marker.name, "Комментарий");
+                    } else {
+                        showMarkerPopup(marker);
+                    }
+                });
+            
+            const markerId = marker.Id ? marker.Id.toString() : `${marker.lat.toFixed(6)}_${marker.lng.toFixed(6)}`;
+            otherMarkers.push({ 
+                lat: marker.lat, 
+                lng: marker.lng, 
+                name: marker.name || "ДПС",
+                id_name: marker.id_name || "",
+                rotation: randomRotation,
+                id: markerId
+            });
+        }
+    });
+})
+.catch(err => console.error("Ошибка загрузки маркеров:", err));
+
+// Закрытие попапов при клике на карту
+map.on('click', function() {
+    document.getElementById('centerNotification').classList.remove('active');
+    document.getElementById('markerPopup').classList.remove('active');
+});
+
+document.getElementById("geoButton").addEventListener("click", () => {
+    if (!navigator.geolocation) { alert("Геолокация не поддерживается вашим браузером."); return; }
+
+    navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        if (!userMarker) {
+            const customIcon = createCustomIcon(userIcon, true);
+            userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            map.flyTo([lat, lng], 15);
+        }
+
+        // Показываем кнопку добавления ДПС
+        document.getElementById("addDpsButton").style.display = "block";
+        
+        showSoundPermissionModal();
+
+        // Сразу проверяем близость при запуске
+        checkProximity(lat, lng);
+
+        navigator.geolocation.watchPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            userMarker.setLatLng([lat, lng]);
+            checkProximity(lat, lng);
+        }, err => console.error("Ошибка геолокации:", err), { enableHighAccuracy: true, maximumAge: 0 });
+
+    }, err => console.error("Ошибка геолокации:", err), { enableHighAccuracy: true });
+
+    document.getElementById("geoButton").style.display = "none";
+});
+
+// Обработчик кнопки добавления ДПС
+document.getElementById("addDpsButton").addEventListener("click", () => {
+    if (!userMarker) {
+        alert("Сначала разрешите геолокацию!");
+        return;
+    }
+    
+    showConfirmDpsModal();
+});
+</script>
+</body>
+</html>
